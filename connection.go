@@ -212,6 +212,10 @@ type Conn struct {
 	peerParams *wire.TransportParameters
 
 	timer *time.Timer
+	// urnetwork: the deadline timer is armed for, and whether its value is still to be received
+	// (resetTimer)
+	timerDeadline monotime.Time
+	timerPending  bool
 	// keepAlivePingSent stores whether a keep alive PING is in flight.
 	// It is reset as soon as we receive a packet from the peer.
 	keepAlivePingSent bool
@@ -575,7 +579,9 @@ func (c *Conn) run() (err error) {
 		}
 	}()
 
-	c.timer = time.NewTimer(monotime.Until(c.idleTimeoutStartTime().Add(c.config.HandshakeIdleTimeout)))
+	c.timerDeadline = c.idleTimeoutStartTime().Add(c.config.HandshakeIdleTimeout)
+	c.timer = time.NewTimer(monotime.Until(c.timerDeadline))
+	c.timerPending = true
 
 	if err := c.cryptoStreamHandler.StartHandshake(c.ctx); err != nil {
 		return err
@@ -657,6 +663,7 @@ runLoop:
 			case <-c.closeChan:
 				break runLoop
 			case <-c.timer.C:
+				c.timerPending = false
 			case <-c.sendingScheduled:
 			case <-sendQueueAvailable:
 			case <-c.notifyReceivedPacket:
@@ -858,6 +865,21 @@ func (c *Conn) nextKeepAliveTime() monotime.Time {
 	return c.lastPacketReceivedTime.Add(keepAliveInterval)
 }
 
+// urnetwork: arms c.timer to fire at deadline, the instant c.timer.Reset(monotime.Until(deadline)) arms it for.
+// A timer still pending for that deadline is left as it is, and another deadline gets a new timer. The run loop
+// calls this on each iteration, and a Reset of a timer that is still in the runtime's timer heap makes its P scan
+// every timer in the heap (runtime.(*timers).adjust): a channel timer stays there between the loop's waits until
+// it fires or is stopped. A new timer is one insert, and the stopped one leaves the heap at its time.
+func (c *Conn) resetTimer(deadline monotime.Time) {
+	if c.timerPending && deadline == c.timerDeadline {
+		return
+	}
+	c.timer.Stop()
+	c.timer = time.NewTimer(monotime.Until(deadline))
+	c.timerDeadline = deadline
+	c.timerPending = true
+}
+
 func (c *Conn) maybeResetTimer() {
 	var deadline monotime.Time
 	if !c.handshakeComplete {
@@ -881,7 +903,7 @@ func (c *Conn) maybeResetTimer() {
 	// If the connection is hard-blocked, we can't even send acknowledgments,
 	// nor can we send PTO probe packets.
 	if c.blocked == blockModeHardBlocked {
-		c.timer.Reset(monotime.Until(deadline))
+		c.resetTimer(deadline)
 		return
 	}
 
@@ -892,14 +914,14 @@ func (c *Conn) maybeResetTimer() {
 		deadline = t
 	}
 	if c.blocked == blockModeCongestionLimited {
-		c.timer.Reset(monotime.Until(deadline))
+		c.resetTimer(deadline)
 		return
 	}
 
 	if !c.pacingDeadline.IsZero() && c.pacingDeadline.Before(deadline) {
 		deadline = c.pacingDeadline
 	}
-	c.timer.Reset(monotime.Until(deadline))
+	c.resetTimer(deadline)
 }
 
 func (c *Conn) idleTimeoutStartTime() monotime.Time {
