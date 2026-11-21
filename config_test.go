@@ -128,6 +128,12 @@ func configWithNonZeroNonFunctionFields(t *testing.T) *Config {
 			f.Set(reflect.ValueOf(true))
 		case "EnableStreamResetPartialDelivery":
 			f.Set(reflect.ValueOf(true))
+		case "MaxUnprocessedPackets":
+			f.Set(reflect.ValueOf(64))
+		case "MaxDatagramSendQueueLen":
+			f.Set(reflect.ValueOf(8))
+		case "MaxDatagramReceiveQueueLen":
+			f.Set(reflect.ValueOf(16))
 		default:
 			t.Fatalf("all fields must be accounted for, but saw unknown field %q", fn)
 		}
@@ -186,6 +192,9 @@ func TestConfigDefaultValues(t *testing.T) {
 	require.EqualValues(t, protocol.DefaultMaxIncomingUniStreams, c.MaxIncomingUniStreams)
 	require.False(t, c.DisablePathMTUDiscovery)
 	require.Nil(t, c.GetConfigForClient)
+	require.Equal(t, protocol.MaxConnUnprocessedPackets, c.MaxUnprocessedPackets)
+	require.Equal(t, maxDatagramSendQueueLenDefault, c.MaxDatagramSendQueueLen)
+	require.Equal(t, maxDatagramRcvQueueLenDefault, c.MaxDatagramReceiveQueueLen)
 }
 
 func TestConfigZeroLimits(t *testing.T) {

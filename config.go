@@ -104,6 +104,20 @@ func populateConfig(config *Config) *Config {
 	if initialPacketSize == 0 {
 		initialPacketSize = protocol.InitialPacketSize
 	}
+	maxUnprocessedPackets := config.MaxUnprocessedPackets
+	if maxUnprocessedPackets <= 0 {
+		maxUnprocessedPackets = protocol.MaxConnUnprocessedPackets
+	}
+	// a server hands a new connection every 0-RTT packet it buffered for it
+	maxUnprocessedPackets = max(maxUnprocessedPackets, protocol.Max0RTTQueueLen+1)
+	maxDatagramSendQueueLen := config.MaxDatagramSendQueueLen
+	if maxDatagramSendQueueLen <= 0 {
+		maxDatagramSendQueueLen = maxDatagramSendQueueLenDefault
+	}
+	maxDatagramReceiveQueueLen := config.MaxDatagramReceiveQueueLen
+	if maxDatagramReceiveQueueLen <= 0 {
+		maxDatagramReceiveQueueLen = maxDatagramRcvQueueLenDefault
+	}
 
 	return &Config{
 		GetConfigForClient:               config.GetConfigForClient,
@@ -124,6 +138,9 @@ func populateConfig(config *Config) *Config {
 		DisablePathMTUDiscovery:          config.DisablePathMTUDiscovery,
 		EnableStreamResetPartialDelivery: config.EnableStreamResetPartialDelivery,
 		Allow0RTT:                        config.Allow0RTT,
+		MaxUnprocessedPackets:            maxUnprocessedPackets,
+		MaxDatagramSendQueueLen:          maxDatagramSendQueueLen,
+		MaxDatagramReceiveQueueLen:       maxDatagramReceiveQueueLen,
 		Tracer:                           config.Tracer,
 	}
 }

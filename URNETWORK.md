@@ -1,17 +1,34 @@
 # Local quic-go dependency
 
-This directory is the unmodified source distribution of
+This directory is the source distribution of
 `github.com/quic-go/quic-go v0.61.0` (module zip
-`h1:ui88A53s8MSVYLC56en0KQ17HARk+9986Dn0SBfKNvA=`), except for three narrowly
-scoped changes, in `connection.go`, in `http3/server.go`, and in
-`http3/server.go` with `http3/server_conn.go`, one addition,
-`urnetwork_conn_group.go`, the added `urnetwork_conn_timer_test.go`,
+`h1:ui88A53s8MSVYLC56en0KQ17HARk+9986Dn0SBfKNvA=`) with these narrowly
+scoped changes, each described below:
+
+- the run loop timer, in `connection.go`;
+- one GOAWAY per connection in a graceful http3 shutdown, in
+  `http3/server.go`;
+- the header phase of an http3 request stream, in `http3/server.go` with
+  `http3/server_conn.go`;
+- one transport over a group of sockets, the added `urnetwork_conn_group.go`;
+- per-connection queue limits, in `interface.go`, `config.go`,
+  `datagram_queue.go` and `connection.go`, with `config_test.go`.
+
+Their tests are the added `urnetwork_conn_timer_test.go`,
 `urnetwork_conn_group_test.go`, `urnetwork_conn_group_oob_test.go`,
-`urnetwork_conn_group_linux_test.go`,
+`urnetwork_conn_group_linux_test.go`, `urnetwork_queue_limits_test.go`,
 `http3/urnetwork_graceful_goaway_test.go` and
-`http3/urnetwork_read_header_timeout_test.go`, and the removed upstream
-`.github/` directory. The upstream MIT license and source headers are
+`http3/urnetwork_read_header_timeout_test.go`. The upstream `.github/`
+directory is removed. The upstream MIT license and source headers are
 preserved.
+
+It is the one copy for every URnetwork module. It moved here from the
+server's `third_party/quic-go` (at server commit `85cb977c6`, 2026-11-19)
+when the apps needed the queue limits below. connect replaces
+`github.com/quic-go/quic-go` with this directory, and so must every main
+module that builds connect, since connect sets the new `Config` fields:
+`replace github.com/quic-go/quic-go => ../connect/third_party/quic-go`, as
+each already does for `../connect/sctp`.
 
 ## The run loop timer
 
@@ -225,6 +242,59 @@ Each fails when its behavior is taken out of `urnetwork_conn_group.go`. The
 upstream suite passes with this addition: `go test -short .` here ran 747
 tests.
 
+## Per-connection queue limits
+
+A connection holds three queues whose lengths upstream fixes:
+
+- the packets it has received and its run loop has not processed yet, at
+  most `protocol.MaxConnUnprocessedPackets`, 256, each in a 1452-byte
+  packet buffer;
+- the DATAGRAM frames queued for sending, 32, each a copy of the payload;
+- the received DATAGRAM frames that `ReceiveDatagram` has not read, 128,
+  each a copy of the payload.
+
+At full-size packets that is about 384 KiB of unprocessed packets and
+240 KiB of DATAGRAMs that one connection may hold, whatever its flow-control
+windows. A phone runs a QUIC connection per peer, six to ten of them in one
+memory budget that charges each connection what it can hold (connect
+`transport_h3_memory.go`, server LBALTOPT2 R20), so the apps set smaller
+queues.
+
+The change:
+
+- `Config.MaxUnprocessedPackets`, `Config.MaxDatagramSendQueueLen` and
+  `Config.MaxDatagramReceiveQueueLen`, in `interface.go`. Zero or negative
+  takes upstream's length, so a config that does not set them behaves as
+  upstream does. `populateConfig` copies them and fills the defaults
+  (`config.go`). An unprocessed-packet limit below 32 is raised to 32, one
+  more than `protocol.Max0RTTQueueLen`, so a server hands a new connection
+  every 0-RTT packet it buffered for it, as upstream requires of the
+  constant.
+- `connection.go`: `handlePacket` drops a packet beyond the connection's
+  limit where it compared with the constant, and the connection builds its
+  DATAGRAM queue with its configured lengths.
+- `datagram_queue.go`: the queue keeps its two lengths, which
+  `newDatagramQueueWithLimits` takes; `newDatagramQueue` keeps upstream's.
+  The constants keep their upstream names as the defaults.
+
+### Tests
+
+`urnetwork_queue_limits_test.go`, run with `go test -run '^TestUrnetwork' .`
+in this directory:
+
+- a config that leaves the limits unset, or sets them negative, gets 256, 32
+  and 128; set limits are kept; an unprocessed-packet limit of 1 becomes 32;
+- a connection's DATAGRAM queue takes its config's lengths, and upstream's
+  without them;
+- a send queue of three admits three frames and blocks the fourth until one
+  leaves; a receive queue of five keeps five of seven frames;
+- a connection with a limit of 40 keeps 40 unprocessed packets and drops the
+  41st, as upstream drops the 257th.
+
+`config_test.go` lists the three fields in `configWithNonZeroNonFunctionFields`,
+which fails on a field it does not know, and checks their defaults in
+`TestConfigDefaultValues`.
+
 Every main module that wants these changes must replace
 `github.com/quic-go/quic-go` with this directory; Go does not inherit
-replacements. The server module does.
+replacements.

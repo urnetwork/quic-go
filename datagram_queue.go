@@ -9,19 +9,26 @@ import (
 	"github.com/quic-go/quic-go/internal/wire"
 )
 
+// The queue lengths a Config leaves unset (URNETWORK.md).
 const (
-	maxDatagramSendQueueLen = 32
-	maxDatagramRcvQueueLen  = 128
+	maxDatagramSendQueueLenDefault = 32
+	maxDatagramRcvQueueLenDefault  = 128
+
+	// the defaults under their upstream names
+	maxDatagramSendQueueLen = maxDatagramSendQueueLenDefault
+	maxDatagramRcvQueueLen  = maxDatagramRcvQueueLenDefault
 )
 
 type datagramQueue struct {
-	sendMx    sync.Mutex
-	sendQueue ringbuffer.RingBuffer[*wire.DatagramFrame]
-	sent      chan struct{} // used to notify Add that a datagram was dequeued
+	sendMx     sync.Mutex
+	sendQueue  ringbuffer.RingBuffer[*wire.DatagramFrame]
+	sendMaxLen int
+	sent       chan struct{} // used to notify Add that a datagram was dequeued
 
-	rcvMx    sync.Mutex
-	rcvQueue [][]byte
-	rcvd     chan struct{} // used to notify Receive that a new datagram was received
+	rcvMx     sync.Mutex
+	rcvQueue  [][]byte
+	rcvMaxLen int
+	rcvd      chan struct{} // used to notify Receive that a new datagram was received
 
 	closeErr error
 	closed   chan struct{}
@@ -32,23 +39,38 @@ type datagramQueue struct {
 }
 
 func newDatagramQueue(hasData func(), logger utils.Logger) *datagramQueue {
+	return newDatagramQueueWithLimits(hasData, logger, maxDatagramSendQueueLenDefault, maxDatagramRcvQueueLenDefault)
+}
+
+// newDatagramQueueWithLimits takes a connection's configured queue lengths,
+// Config.MaxDatagramSendQueueLen and Config.MaxDatagramReceiveQueueLen. A
+// nonpositive length takes its default.
+func newDatagramQueueWithLimits(hasData func(), logger utils.Logger, sendMaxLen int, rcvMaxLen int) *datagramQueue {
+	if sendMaxLen <= 0 {
+		sendMaxLen = maxDatagramSendQueueLenDefault
+	}
+	if rcvMaxLen <= 0 {
+		rcvMaxLen = maxDatagramRcvQueueLenDefault
+	}
 	return &datagramQueue{
-		hasData: hasData,
-		rcvd:    make(chan struct{}, 1),
-		sent:    make(chan struct{}, 1),
-		closed:  make(chan struct{}),
-		logger:  logger,
+		hasData:    hasData,
+		sendMaxLen: sendMaxLen,
+		rcvMaxLen:  rcvMaxLen,
+		rcvd:       make(chan struct{}, 1),
+		sent:       make(chan struct{}, 1),
+		closed:     make(chan struct{}),
+		logger:     logger,
 	}
 }
 
 // Add queues a new DATAGRAM frame for sending.
-// Up to 32 DATAGRAM frames will be queued.
+// Up to the send queue length (32 by default) DATAGRAM frames will be queued.
 // Once that limit is reached, Add blocks until the queue size has reduced.
 func (h *datagramQueue) Add(f *wire.DatagramFrame) error {
 	h.sendMx.Lock()
 
 	for {
-		if h.sendQueue.Len() < maxDatagramSendQueueLen {
+		if h.sendQueue.Len() < h.sendMaxLen {
 			h.sendQueue.PushBack(f)
 			h.sendMx.Unlock()
 			h.hasData()
@@ -95,7 +117,7 @@ func (h *datagramQueue) HandleDatagramFrame(f *wire.DatagramFrame) {
 	copy(data, f.Data)
 	var queued bool
 	h.rcvMx.Lock()
-	if len(h.rcvQueue) < maxDatagramRcvQueueLen {
+	if len(h.rcvQueue) < h.rcvMaxLen {
 		h.rcvQueue = append(h.rcvQueue, data)
 		queued = true
 		select {

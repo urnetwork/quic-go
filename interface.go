@@ -181,6 +181,19 @@ type Config struct {
 	// Enable QUIC Stream Resets with Partial Delivery.
 	// See https://datatracker.ietf.org/doc/html/draft-ietf-quic-reliable-stream-reset-09.
 	EnableStreamResetPartialDelivery bool
+	// MaxUnprocessedPackets is the most received packets a connection queues
+	// before its run loop processes them. Packets beyond it are dropped.
+	// If zero or negative, 256 is used. Values below 32 use 32, so a server's
+	// buffered 0-RTT packets always fit (URNETWORK.md).
+	MaxUnprocessedPackets int
+	// MaxDatagramSendQueueLen is the most DATAGRAM frames queued for sending.
+	// SendDatagram blocks while the queue is full.
+	// If zero or negative, 32 is used (URNETWORK.md).
+	MaxDatagramSendQueueLen int
+	// MaxDatagramReceiveQueueLen is the most received DATAGRAM frames queued
+	// until ReceiveDatagram reads them. DATAGRAM frames beyond it are dropped.
+	// If zero or negative, 128 is used (URNETWORK.md).
+	MaxDatagramReceiveQueueLen int
 
 	Tracer func(ctx context.Context, isClient bool, connID ConnectionID) qlogwriter.Trace
 }

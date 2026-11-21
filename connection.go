@@ -559,7 +559,8 @@ func (c *Conn) preSetup() {
 
 	c.receivedPacketHandler = *ackhandler.NewReceivedPacketHandler(c.logger)
 
-	c.datagramQueue = newDatagramQueue(c.scheduleSending, c.logger)
+	c.datagramQueue = newDatagramQueueWithLimits(c.scheduleSending, c.logger,
+		c.config.MaxDatagramSendQueueLen, c.config.MaxDatagramReceiveQueueLen)
 	c.connState.Version = c.version
 }
 
@@ -1972,12 +1973,22 @@ func (c *Conn) handleFrame(
 	return pathChallenge, err
 }
 
+// maxUnprocessedPackets is Config.MaxUnprocessedPackets, which populateConfig
+// sets, or the default for a config it did not populate.
+func (c *Conn) maxUnprocessedPackets() int {
+	if c.config.MaxUnprocessedPackets <= 0 {
+		return protocol.MaxConnUnprocessedPackets
+	}
+	return c.config.MaxUnprocessedPackets
+}
+
 // handlePacket is called by the server with a new packet
 func (c *Conn) handlePacket(p receivedPacket) {
 	c.receivedPacketMx.Lock()
 	// Discard packets once the amount of queued packets is larger than
-	// the channel size, protocol.MaxConnUnprocessedPackets
-	if c.receivedPackets.Len() >= protocol.MaxConnUnprocessedPackets {
+	// the channel size, Config.MaxUnprocessedPackets
+	// (protocol.MaxConnUnprocessedPackets by default)
+	if c.receivedPackets.Len() >= c.maxUnprocessedPackets() {
 		if c.qlogger != nil {
 			var datagramPayloadChecksum qlog.DatagramPayloadChecksum
 			if wire.IsLongHeaderPacket(p.data[0]) {
