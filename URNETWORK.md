@@ -23,6 +23,8 @@ with:
   cannot do: Go ignores a dependency's replacements. Upstream
   `github.com/quic-go/quic-go` can sit beside it in one build, as a separate
   package, for libraries that import it;
+- `go 1.27.4` in `go.mod`, the release toolchain of every URnetwork module
+  (upstream declares `go 1.25.0`);
 - upstream's `.github/` and its two nested CI modules,
   `integrationtests/fips` and `integrationtests/gomodvendor`, removed. Only
   upstream's workflows ran them, and the module zip never held them.

@@ -1,6 +1,6 @@
 module github.com/urnetwork/quic-go
 
-go 1.25.0
+go 1.27.4
 
 require (
 	github.com/quic-go/go-ossfuzz-seeds v0.1.0
