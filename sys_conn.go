@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/quic-go/quic-go/internal/monotime"
-	"github.com/quic-go/quic-go/internal/protocol"
-	"github.com/quic-go/quic-go/internal/utils"
+	"github.com/urnetwork/quic-go/internal/monotime"
+	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/internal/utils"
 )
 
 type connCapabilities struct {

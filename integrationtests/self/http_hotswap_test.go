@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/quic-go/quic-go"
-	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/require"
+	"github.com/urnetwork/quic-go"
+	"github.com/urnetwork/quic-go/http3"
 )
 
 func TestHTTP3ServerHotswap(t *testing.T) {

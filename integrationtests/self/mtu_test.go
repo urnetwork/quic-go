@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/quic-go/quic-go"
-	quicproxy "github.com/quic-go/quic-go/integrationtests/tools/proxy"
-	"github.com/quic-go/quic-go/internal/protocol"
-	"github.com/quic-go/quic-go/qlog"
-	"github.com/quic-go/quic-go/testutils/events"
+	"github.com/urnetwork/quic-go"
+	quicproxy "github.com/urnetwork/quic-go/integrationtests/tools/proxy"
+	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/qlog"
+	"github.com/urnetwork/quic-go/testutils/events"
 
 	"github.com/stretchr/testify/require"
 )

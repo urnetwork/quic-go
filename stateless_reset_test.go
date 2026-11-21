@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/quic-go/quic-go/internal/protocol"
 	"github.com/stretchr/testify/require"
+	"github.com/urnetwork/quic-go/internal/protocol"
 )
 
 func TestStatelessResetter(t *testing.T) {

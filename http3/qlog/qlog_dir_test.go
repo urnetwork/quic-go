@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/quic-go/quic-go"
-	"github.com/quic-go/quic-go/qlog"
 	"github.com/stretchr/testify/require"
+	"github.com/urnetwork/quic-go"
+	"github.com/urnetwork/quic-go/qlog"
 )
 
 func TestQLOGDIRSet(t *testing.T) {

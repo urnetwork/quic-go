@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/quic-go/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/internal/protocol"
 )
 
 // The bound on any one step of these tests; never waited out on success.

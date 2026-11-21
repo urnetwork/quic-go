@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/quic-go/quic-go/internal/utils"
-	"github.com/quic-go/quic-go/internal/utils/ringbuffer"
-	"github.com/quic-go/quic-go/internal/wire"
+	"github.com/urnetwork/quic-go/internal/utils"
+	"github.com/urnetwork/quic-go/internal/utils/ringbuffer"
+	"github.com/urnetwork/quic-go/internal/wire"
 )
 
 // The queue lengths a Config leaves unset (URNETWORK.md).

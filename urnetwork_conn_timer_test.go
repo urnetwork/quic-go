@@ -14,7 +14,7 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/quic-go/quic-go/internal/monotime"
+	"github.com/urnetwork/quic-go/internal/monotime"
 )
 
 // The instants the timer fires, as the time since the loop started, and the

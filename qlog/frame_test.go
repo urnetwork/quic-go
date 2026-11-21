@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/quic-go/quic-go/internal/protocol"
-	"github.com/quic-go/quic-go/internal/qerr"
-	"github.com/quic-go/quic-go/qlogwriter/jsontext"
+	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/internal/qerr"
+	"github.com/urnetwork/quic-go/qlogwriter/jsontext"
 
 	"github.com/stretchr/testify/require"
 )

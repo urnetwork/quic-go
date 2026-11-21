@@ -1,34 +1,79 @@
-# Local quic-go dependency
+# URnetwork's quic-go
 
-This directory is the source distribution of
-`github.com/quic-go/quic-go v0.61.0` (module zip
-`h1:ui88A53s8MSVYLC56en0KQ17HARk+9986Dn0SBfKNvA=`) with these narrowly
-scoped changes, each described below:
+This repository is URnetwork's fork of quic-go, the module
+`github.com/urnetwork/quic-go`. It is upstream `github.com/quic-go/quic-go
+v0.61.0` (module zip `h1:ui88A53s8MSVYLC56en0KQ17HARk+9986Dn0SBfKNvA=`)
+with:
 
-- the run loop timer, in `connection.go`;
-- one GOAWAY per connection in a graceful http3 shutdown, in
-  `http3/server.go`;
-- the header phase of an http3 request stream, in `http3/server.go` with
-  `http3/server_conn.go`;
-- one transport over a group of sockets, the added `urnetwork_conn_group.go`;
-- per-connection queue limits, in `interface.go`, `config.go`,
-  `datagram_queue.go` and `connection.go`, with `config_test.go`.
+- these narrowly scoped changes, each described below:
+  - the run loop timer, in `connection.go`;
+  - one GOAWAY per connection in a graceful http3 shutdown, in
+    `http3/server.go`;
+  - the header phase of an http3 request stream, in `http3/server.go` with
+    `http3/server_conn.go`;
+  - one transport over a group of sockets, the added
+    `urnetwork_conn_group.go`;
+  - per-connection queue limits, in `interface.go`, `config.go`,
+    `datagram_queue.go` and `connection.go`, with `config_test.go`;
+- its own module path. Every internal import names
+  `github.com/urnetwork/quic-go`, as do the mockgen directives, the lint
+  config, the fuzzing and interop scripts and the qlog version lookup in
+  `qlogwriter/trace.go`. A module that imports this one builds it whatever
+  replace lines its consumers have, which a fork under upstream's path
+  cannot do: Go ignores a dependency's replacements. Upstream
+  `github.com/quic-go/quic-go` can sit beside it in one build, as a separate
+  package, for libraries that import it;
+- upstream's `.github/` and its two nested CI modules,
+  `integrationtests/fips` and `integrationtests/gomodvendor`, removed. Only
+  upstream's workflows ran them, and the module zip never held them.
 
-Their tests are the added `urnetwork_conn_timer_test.go`,
+The tests of the changes are the added `urnetwork_conn_timer_test.go`,
 `urnetwork_conn_group_test.go`, `urnetwork_conn_group_oob_test.go`,
 `urnetwork_conn_group_linux_test.go`, `urnetwork_queue_limits_test.go`,
 `http3/urnetwork_graceful_goaway_test.go` and
-`http3/urnetwork_read_header_timeout_test.go`. The upstream `.github/`
-directory is removed. The upstream MIT license and source headers are
-preserved.
+`http3/urnetwork_read_header_timeout_test.go`; `go test -run
+'^TestUrnetwork' . ./http3/` runs them. The upstream MIT license and source
+headers are preserved. Upstream's `README.md`, `SECURITY.md` and
+`FUZZING.md` are unchanged and describe upstream, and links to upstream
+issues stay upstream's.
 
-It is the one copy for every URnetwork module. It moved here from the
-server's `third_party/quic-go` (at server commit `85cb977c6`, 2026-11-19)
-when the apps needed the queue limits below. connect replaces
-`github.com/quic-go/quic-go` with this directory, and so must every main
-module that builds connect, since connect sets the new `Config` fields:
-`replace github.com/quic-go/quic-go => ../connect/third_party/quic-go`, as
-each already does for `../connect/sctp`.
+The changes were made in the server's `third_party/quic-go` (2026-11-04 to
+2026-11-19) and in connect's copy of it (the queue limits, 2026-11-20); each
+is one commit here, with the original date, and its tree is the copy's.
+
+## Using it
+
+A URnetwork main module requires the fork at `v0.0.0` and replaces it with
+the sibling checkout, as it does glog:
+
+```
+require github.com/urnetwork/quic-go v0.0.0
+
+replace github.com/urnetwork/quic-go => ../quic-go
+```
+
+and imports `github.com/urnetwork/quic-go`, `github.com/urnetwork/quic-go/http3`
+and so on. Every main module that builds a module importing the fork needs
+the replace and the `../quic-go` checkout: Go ignores a dependency's
+replacements.
+
+## Releases
+
+The release (the build repository's `all/run.sh`) handles this repository as
+it handles glog. It pulls `main`, branches `v<version>`, renames the module in
+place to `github.com/urnetwork/quic-go/v2026` and rewrites the internal
+imports to match, then commits and tags `v<version>` (for example
+`v2026.11.21-1104000000`) and pushes the branch and tag before it edits
+connect. Each published module that requires the fork then drops its replace
+and requires `github.com/urnetwork/quic-go/v2026` at that version, so a
+consumer of a published connect or SDK resolves the fork from the tag with no
+replace of its own. `main` itself is never tagged.
+
+## Updating from upstream
+
+Bring a newer upstream tag in from the `upstream` remote onto `main`, keep
+the changes below and the module path (new upstream files need their imports
+renamed), and run the tests here, `go test -short ./...` among them.
 
 ## The run loop timer
 
@@ -60,8 +105,8 @@ No deadline computation, wake-up condition or timer instant changes.
 
 ### Tests
 
-`urnetwork_conn_timer_test.go`, run with `go test -run '^TestUrnetwork' .` in
-this directory:
+`urnetwork_conn_timer_test.go`, run with `go test -run '^TestUrnetwork' .` at
+the repository root:
 
 - under virtual time, a loop like the connection's, with deadlines that stay,
   move earlier or later, or are already due, and events that wake the loop
@@ -104,7 +149,7 @@ graceful shutdown, or for a close of the server.
 ### Tests
 
 `http3/urnetwork_graceful_goaway_test.go`, run with
-`go test -run '^TestUrnetwork' ./http3/` in this directory. A server recorder
+`go test -run '^TestUrnetwork' ./http3/` at the repository root. A server recorder
 holds the connection inside its close window (quic-go records the close between
 closing the streams and canceling the context) and counts the GOAWAYs the
 server creates. After a graceful shutdown's GOAWAY, the client closes its
@@ -151,7 +196,7 @@ With `ReadHeaderTimeout` unset, only the read of the field section changes.
 ### Tests
 
 `http3/urnetwork_read_header_timeout_test.go`, run with
-`go test -run '^TestUrnetwork' ./http3/` in this directory:
+`go test -run '^TestUrnetwork' ./http3/` at the repository root:
 
 - a stream that sends only a HEADERS frame's type and announced length is
   reset with `H3_REQUEST_INCOMPLETE` once `ReadHeaderTimeout` passes, and its
@@ -216,7 +261,7 @@ them:
 
 `urnetwork_conn_group_test.go`, `urnetwork_conn_group_oob_test.go` (darwin,
 linux, freebsd) and `urnetwork_conn_group_linux_test.go`, run with
-`go test -run '^TestUrnetwork' .` in this directory. A relay stands in for the
+`go test -run '^TestUrnetwork' .` at the repository root. A relay stands in for the
 kernel's choice of socket, and for a NAT, so a flow moves between sockets
 bound to distinct ports when a test says, whatever the platform's reuseport
 delivery:
@@ -280,7 +325,7 @@ The change:
 ### Tests
 
 `urnetwork_queue_limits_test.go`, run with `go test -run '^TestUrnetwork' .`
-in this directory:
+at the repository root:
 
 - a config that leaves the limits unset, or sets them negative, gets 256, 32
   and 128; set limits are kept; an unprocessed-packet limit of 1 becomes 32;
@@ -294,7 +339,3 @@ in this directory:
 `config_test.go` lists the three fields in `configWithNonZeroNonFunctionFields`,
 which fails on a field it does not know, and checks their defaults in
 `TestConfigDefaultValues`.
-
-Every main module that wants these changes must replace
-`github.com/quic-go/quic-go` with this directory; Go does not inherit
-replacements.

@@ -15,11 +15,11 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/quic-go/quic-go"
-	"github.com/quic-go/quic-go/internal/protocol"
-	"github.com/quic-go/quic-go/qlog"
-	"github.com/quic-go/quic-go/testutils/events"
-	"github.com/quic-go/quic-go/testutils/simnet"
+	"github.com/urnetwork/quic-go"
+	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/qlog"
+	"github.com/urnetwork/quic-go/testutils/events"
+	"github.com/urnetwork/quic-go/testutils/simnet"
 
 	"github.com/stretchr/testify/require"
 )

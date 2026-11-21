@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/quic-go/quic-go/internal/protocol"
 	"github.com/stretchr/testify/require"
+	"github.com/urnetwork/quic-go/internal/protocol"
 )
 
 func TestRTTStatsDefaults(t *testing.T) {

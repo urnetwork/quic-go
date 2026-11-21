@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/quic-go/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/internal/protocol"
 )
 
 // A GSO batch written through the group leaves as segments of the asked size,

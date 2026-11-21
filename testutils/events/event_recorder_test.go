@@ -5,9 +5,9 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/quic-go/quic-go/qlog"
-	"github.com/quic-go/quic-go/qlogwriter"
 	"github.com/stretchr/testify/require"
+	"github.com/urnetwork/quic-go/qlog"
+	"github.com/urnetwork/quic-go/qlogwriter"
 )
 
 func TestRecorder(t *testing.T) {

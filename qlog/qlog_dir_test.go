@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/quic-go/quic-go/internal/protocol"
-	"github.com/quic-go/quic-go/qlogwriter"
 	"github.com/stretchr/testify/require"
+	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/qlogwriter"
 )
 
 func TestQLOGDIRSet(t *testing.T) {

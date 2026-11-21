@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/require"
+	"github.com/urnetwork/quic-go/http3"
 )
 
 func TestHTTPClientTrace(t *testing.T) {
