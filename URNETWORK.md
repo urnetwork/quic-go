@@ -19,6 +19,7 @@ with:
     and `urnetwork_stop_recording.go` in `internal/ackhandler`,
     `internal/congestion` and `internal/handshake`, with one call in
     `connection.go`;
+  - a CONNECTION_CLOSE from a canceled dial, in `transport.go`;
 - its own module path. Every internal import names
   `github.com/urnetwork/quic-go`, as do the mockgen directives, the lint
   config, the fuzzing and interop scripts and the qlog version lookup in
@@ -37,6 +38,7 @@ The tests of the changes are the added `urnetwork_conn_timer_test.go`,
 `urnetwork_conn_group_test.go`, `urnetwork_conn_group_oob_test.go`,
 `urnetwork_conn_group_linux_test.go`, `urnetwork_queue_limits_test.go`,
 `urnetwork_handshake_trace_test.go`,
+`urnetwork_canceled_dial_close_test.go`,
 `http3/urnetwork_graceful_goaway_test.go` and
 `http3/urnetwork_read_header_timeout_test.go`; `go test -run
 '^TestUrnetwork' . ./http3/` runs them, and `go test -run '^TestUrnetwork'
@@ -408,3 +410,50 @@ streams 1000-byte writes to a server: a handshake-only trace allocates what
 an untraced connection does (16 to 17 allocations and about 690 bytes a
 write) and gets no event, where a trace of every event costs 20 to 21
 allocations and about 1,060 bytes, with 1.3 to 1.4 events a write.
+## A canceled dial closes
+
+`Transport.doDial` waits for the handshake, the dial's context, or the end of
+the connection's run loop. When the context ended first, upstream destroyed
+the connection (`conn.destroy(nil)`), which sends nothing. A server that had
+the client's Initial then held the handshake until its handshake idle timeout.
+URnetwork's clients cancel dials routinely: a race's losers, an api request
+another route answered, a carrier a better one preempted. On the lb_alt front
+about 98% of whodis handshakes failed, 97% of those by the front's idle
+timeout, while the same clients completed QUIC on 443 (server, 2026-11-21).
+
+The change, in `transport.go`:
+
+- A canceled dial closes the connection as a local close does: `closeLocal`
+  with application error 0. As for any local close, quic-go sends a
+  CONNECTION_CLOSE once the connection's first packet is out, and nothing
+  before, when the server holds no state. In the Initial and Handshake packet
+  spaces it goes out as a transport CONNECTION_CLOSE with APPLICATION_ERROR
+  (RFC 9000 §10.2.3), which the server records as the peer's close, the
+  front's `peer_closed`.
+- The run loop writes the close, as it writes every close. The canceled dial
+  waits for the run loop at most `canceledDialCloseWait` (100 ms) and returns
+  `context.Cause(ctx)` as before. A write that blocks longer, on a full socket
+  buffer or a paced packet conn such as connect's DNS translation, completes on
+  the run loop after the dial returns; `Transport.Close` waits for it, as it
+  waits for every connection's run loop.
+- The closed connection keeps its connection IDs for three PTOs and answers
+  late packets with the close, as after any local close. Upstream's destroy
+  removed them at once.
+
+Nothing changes for a dial that completes or fails on its own.
+
+### Tests
+
+`urnetwork_canceled_dial_close_test.go`, run with `go test -run '^TestUrnetwork' .`
+at the repository root. A relay forwards the client's datagrams to an early
+listener and drops the server's, so the server holds a handshake the client
+can never complete:
+
+- a dial canceled once the server has accepted the early connection ends that
+  connection with the client's APPLICATION_ERROR close, marked remote; upstream
+  leaves it open until the idle timeout, 60 s here;
+- with every socket write from the cancellation on blocked, the dial still
+  returns, the server sees no close while the write is held, and sees the
+  client's close once it is released; upstream writes no close, and a wait on
+  the run loop with no bound never returns.
+
