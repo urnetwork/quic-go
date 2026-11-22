@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
 )
 
 // Every socket of a group is read through quic-go's oob conn, as a lone socket

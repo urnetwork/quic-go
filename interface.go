@@ -8,9 +8,9 @@ import (
 	"slices"
 	"time"
 
-	"github.com/urnetwork/quic-go/internal/handshake"
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026/internal/handshake"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
 )
 
 // The StreamID is the ID of a QUIC stream.

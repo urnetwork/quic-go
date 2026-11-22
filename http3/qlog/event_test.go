@@ -8,8 +8,8 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/urnetwork/quic-go"
-	"github.com/urnetwork/quic-go/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
 
 	"github.com/stretchr/testify/require"
 )

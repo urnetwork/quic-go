@@ -15,14 +15,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/urnetwork/quic-go"
-	"github.com/urnetwork/quic-go/http3"
-	"github.com/urnetwork/quic-go/integrationtests/tools"
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/wire"
-	"github.com/urnetwork/quic-go/qlog"
-	"github.com/urnetwork/quic-go/qlogwriter"
-	"github.com/urnetwork/quic-go/testutils/events"
+	"github.com/urnetwork/quic-go/v2026"
+	"github.com/urnetwork/quic-go/v2026/http3"
+	"github.com/urnetwork/quic-go/v2026/integrationtests/tools"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/wire"
+	"github.com/urnetwork/quic-go/v2026/qlog"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026/testutils/events"
 
 	"github.com/stretchr/testify/require"
 )

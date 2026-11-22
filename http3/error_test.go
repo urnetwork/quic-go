@@ -3,7 +3,7 @@ package http3
 import (
 	"testing"
 
-	"github.com/urnetwork/quic-go"
+	"github.com/urnetwork/quic-go/v2026"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

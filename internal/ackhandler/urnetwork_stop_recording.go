@@ -1,6 +1,6 @@
 package ackhandler
 
-import "github.com/urnetwork/quic-go/internal/congestion"
+import "github.com/urnetwork/quic-go/v2026/internal/congestion"
 
 // Stops h, its congestion controller and its ECN tracker from recording
 // events, so none of them builds one from then on, for a connection whose

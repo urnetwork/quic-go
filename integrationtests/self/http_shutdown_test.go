@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/urnetwork/quic-go"
-	"github.com/urnetwork/quic-go/http3"
-	quicproxy "github.com/urnetwork/quic-go/integrationtests/tools/proxy"
+	"github.com/urnetwork/quic-go/v2026"
+	"github.com/urnetwork/quic-go/v2026/http3"
+	quicproxy "github.com/urnetwork/quic-go/v2026/integrationtests/tools/proxy"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
