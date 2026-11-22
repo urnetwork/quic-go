@@ -953,6 +953,8 @@ func (c *Conn) switchToNewPath(tr *Transport, now monotime.Time) {
 
 func (c *Conn) handleHandshakeComplete(now monotime.Time) error {
 	defer close(c.handshakeCompleteChan)
+	// runs first: a trace of the handshake only ends before HandshakeComplete
+	defer c.endHandshakeOnlyTrace()
 	// Once the handshake completes, we have derived 1-RTT keys.
 	// There's no point in queueing undecryptable packets for later decryption anymore.
 	c.undecryptablePackets = nil

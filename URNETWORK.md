@@ -15,6 +15,10 @@ with:
     `urnetwork_conn_group.go`;
   - per-connection queue limits, in `interface.go`, `config.go`,
     `datagram_queue.go` and `connection.go`, with `config_test.go`;
+  - a trace of the handshake only, the added `urnetwork_handshake_trace.go`
+    and `urnetwork_stop_recording.go` in `internal/ackhandler`,
+    `internal/congestion` and `internal/handshake`, with one call in
+    `connection.go`;
 - its own module path. Every internal import names
   `github.com/urnetwork/quic-go`, as do the mockgen directives, the lint
   config, the fuzzing and interop scripts and the qlog version lookup in
@@ -32,9 +36,11 @@ with:
 The tests of the changes are the added `urnetwork_conn_timer_test.go`,
 `urnetwork_conn_group_test.go`, `urnetwork_conn_group_oob_test.go`,
 `urnetwork_conn_group_linux_test.go`, `urnetwork_queue_limits_test.go`,
+`urnetwork_handshake_trace_test.go`,
 `http3/urnetwork_graceful_goaway_test.go` and
 `http3/urnetwork_read_header_timeout_test.go`; `go test -run
-'^TestUrnetwork' . ./http3/` runs them. The upstream MIT license and source
+'^TestUrnetwork' . ./http3/` runs them, and `go test -run '^TestUrnetwork'
+./internal/...` the trace's in the internal packages. The upstream MIT license and source
 headers are preserved. Upstream's `README.md`, `SECURITY.md` and
 `FUZZING.md` are unchanged and describe upstream, and links to upstream
 issues stay upstream's.
@@ -341,3 +347,64 @@ at the repository root:
 `config_test.go` lists the three fields in `configWithNonZeroNonFunctionFields`,
 which fails on a field it does not know, and checks their defaults in
 `TestConfigDefaultValues`.
+
+## A trace of the handshake only
+
+quic-go builds each event of a traced connection, a qlog event with its
+frames and, for a long header packet, the datagram's checksum, before it
+hands the event to the connection's recorder, so a trace pays that whatever
+it keeps. The connect front classifies its whodis handshakes that fail from
+a trace of each whodis connection (server `connect/front_quic_trace.go`), and
+it wants nothing of an established connection: there, the events cost about
+four allocations a packet for the connection's whole life.
+
+`HandshakeOnlyTrace`, in the added `urnetwork_handshake_trace.go`, is an
+optional interface of the `qlogwriter.Trace` that `Config.Tracer` returns:
+`HandshakeOnly() bool`. When the handshake completes, the connection's
+`handleHandshakeComplete` (`connection.go`, one deferred call that runs
+before `HandshakeComplete` closes) asks it, on the run loop. When it reports
+true:
+
+- the connection's sent packet handler, its congestion controller and its ECN
+  tracker (`ackhandler.StopRecording`, which `congestion.StopRecording`
+  serves), its crypto setup and 1-RTT keys (`handshake.StopRecording`) and
+  its path MTU discoverer drop the recorder, each in an added
+  `urnetwork_stop_recording.go` or the new file, so none of them builds an
+  event from then on; a congestion controller built after a path migration
+  takes the handler's recorder, which is then none;
+- the connection drops its own recorder and closes it, under
+  `receivedPacketMx`, since `handlePacket` reads and records through it on
+  the transport's goroutine under that lock. `run` then finds no recorder to
+  close, and the connection records no `ConnectionClosed`.
+
+A trace that doesn't implement the interface, or reports false, records the
+connection's whole life as before, and an untraced connection is untouched.
+An http3 producer, which http3 adds only to a trace that supports its schema,
+is http3's and keeps recording.
+
+### Tests
+
+`urnetwork_handshake_trace_test.go`, run with `go test -run '^TestUrnetwork'
+.`, and `urnetwork_stop_recording_test.go` in `internal/ackhandler`,
+`internal/congestion` and `internal/handshake`:
+
+- over real connections on loopback, a handshake-only trace on a server and
+  on a client records the handshake, is closed once when it completes,
+  before `HandshakeComplete`, and gets no event for 100 KB of data, the
+  path MTU discovery or the close;
+- a trace without `HandshakeOnly`, and one reporting false, gets 1-RTT
+  packets after the handshake, RTT samples and the close, an event for every
+  packet the connection sent (`ConnectionStats().PacketsSent`), and is closed
+  once, with the connection;
+- `endHandshakeOnlyTrace` drops the recorder of every part of a connection,
+  the path MTU discoverer's included, which loopback may never exercise;
+  each part then records nothing, and a trace that doesn't opt in keeps
+  every recorder;
+- each `StopRecording` stops its part's events, a congestion controller
+  built after a migration included, and leaves a part of another type.
+
+Each fails when its stop is taken out. `BenchmarkUrnetworkHandshakeOnlyTrace`
+streams 1000-byte writes to a server: a handshake-only trace allocates what
+an untraced connection does (16 to 17 allocations and about 690 bytes a
+write) and gets no event, where a trace of every event costs 20 to 21
+allocations and about 1,060 bytes, with 1.3 to 1.4 events a write.
