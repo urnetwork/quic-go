@@ -264,6 +264,14 @@ func (t *Transport) dial(ctx context.Context, addr net.Addr, host string, tlsCon
 	)
 }
 
+// urnetwork: how long a canceled dial waits for its connection's run loop to
+// write the CONNECTION_CLOSE and return. A write to a socket takes far less,
+// so the wait ends with the run loop; a write that blocks (a full socket
+// buffer, or a paced packet conn under the transport) finishes on the run
+// loop's own goroutine after the dial has returned, and Transport.Close still
+// waits for it as it waits for every connection's run loop.
+const canceledDialCloseWait = 100 * time.Millisecond
+
 func (t *Transport) doDial(
 	ctx context.Context,
 	sendConn sendConn,
@@ -344,11 +352,20 @@ func (t *Transport) doDial(
 
 	select {
 	case <-ctx.Done():
-		conn.destroy(nil)
+		// urnetwork: a canceled dial closes as a local close does, with a
+		// CONNECTION_CLOSE (application error 0) once its first packet is out,
+		// so the server ends the handshake at once rather than waiting out its
+		// idle timeout. The run loop writes the close; the cancellation waits
+		// for the run loop at most canceledDialCloseWait, never on the network
+		// past that (URNETWORK.md, "A canceled dial closes").
+		conn.closeLocal(&ApplicationError{ErrorCode: 0})
+		closeWait := time.NewTimer(canceledDialCloseWait)
+		defer closeWait.Stop()
 		// wait until the Go routine that called Conn.run() returns
 		select {
 		case <-errChan:
 		case <-recreateChan:
+		case <-closeWait.C:
 		}
 		return nil, context.Cause(ctx)
 	case params := <-recreateChan:
