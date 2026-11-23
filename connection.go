@@ -875,7 +875,11 @@ func (c *Conn) resetTimer(deadline monotime.Time) {
 	if c.timerPending && deadline == c.timerDeadline {
 		return
 	}
-	c.timer.Stop()
+	// urnetwork: the stop of a pending timer, which leaves it in its P's heap
+	// as a zombie, is counted for the timer census (URNETWORK.md)
+	if c.timer.Stop() {
+		TimerCensusStop(TimerCensusSiteConnTimer)
+	}
 	c.timer = time.NewTimer(monotime.Until(deadline))
 	c.timerDeadline = deadline
 	c.timerPending = true

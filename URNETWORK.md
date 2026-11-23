@@ -20,6 +20,9 @@ with:
     `internal/congestion` and `internal/handshake`, with one call in
     `connection.go`;
   - a CONNECTION_CLOSE from a canceled dial, in `transport.go`;
+  - a census of timer changes, the added `urnetwork_timer_census.go`, with
+    its counts in `receive_stream.go`, `send_stream.go`, `connection.go` and
+    `http3/server_conn.go`;
 - its own module path. Every internal import names
   `github.com/urnetwork/quic-go`, as do the mockgen directives, the lint
   config, the fuzzing and interop scripts and the qlog version lookup in
@@ -38,9 +41,10 @@ The tests of the changes are the added `urnetwork_conn_timer_test.go`,
 `urnetwork_conn_group_test.go`, `urnetwork_conn_group_oob_test.go`,
 `urnetwork_conn_group_linux_test.go`, `urnetwork_queue_limits_test.go`,
 `urnetwork_handshake_trace_test.go`,
-`urnetwork_canceled_dial_close_test.go`,
-`http3/urnetwork_graceful_goaway_test.go` and
-`http3/urnetwork_read_header_timeout_test.go`; `go test -run
+`urnetwork_canceled_dial_close_test.go`, `urnetwork_timer_census_test.go`,
+`http3/urnetwork_graceful_goaway_test.go`,
+`http3/urnetwork_read_header_timeout_test.go` and
+`http3/urnetwork_timer_census_test.go`; `go test -run
 '^TestUrnetwork' . ./http3/` runs them, and `go test -run '^TestUrnetwork'
 ./internal/...` the trace's in the internal packages. The upstream MIT license and source
 headers are preserved. Upstream's `README.md`, `SECURITY.md` and
@@ -457,3 +461,81 @@ can never complete:
   client's close once it is released; upstream writes no close, and a wait on
   the run loop with no bound never returns.
 
+## A census of timer changes
+
+A Reset of a Go runtime timer that is pending, or still in its P's heap as a
+zombie, marks the timer modified, and once the earliest modified deadline on a
+P passes, that P's next timer check walks its whole heap
+(`runtime.(*timers).adjust`). A P's walks therefore follow the shortest
+horizons among its frequent modifications, not their CPU, so a CPU profile
+can't name what sets them off. On 2026-11-23 the connect processes of one
+block walked their heaps for 7.4–13.8% of their CPU, against 2.1–2.3% on the
+other blocks (server CPUOPT7.md §10.3.1). The census counts, on a sample, the
+changes quic-go makes to runtime timers on its hot paths, by where it makes
+them and how far ahead each changed timer is due, so the server's counters can
+name the sources (server CPUOPT7.md §11).
+
+The change:
+
+- `urnetwork_timer_census.go` adds `TimerCensus`, a sample period (a positive
+  power of two) and a `Record` function; `SetTimerCensus`, which installs one
+  for the process or removes it; `TimerCensusSite`, a fixed set of four sites;
+  and `TimerCensusReset` and `TimerCensusStop`, which the counted code and
+  `http3` call. Without a census a counted change costs an atomic load. With
+  one, the change is sampled from the calling thread's random source
+  (`math/rand/v2`), with no lock or allocation, and only a sampled change
+  calls `Record`, with the sample period as its count.
+- A stream's Read, Peek and Write (`receive_stream.go`, `send_stream.go`)
+  count each Reset of the call's deadline timer, with the time then left to
+  the deadline, and the timer's stop as the call returns when it is still
+  pending. The timer the call's first wait creates is an insert, and isn't
+  counted. Every Reset is counted as a possible modification, though one after
+  a wait that never blocked, because a wake was already queued (such as the
+  wake `SetReadDeadline` leaves), finds the timer in no heap and is an insert;
+  the census can't tell the two apart.
+- The run loop timer (`connection.go`): `resetTimer` stops a pending timer and
+  arms a new one, and never moves a pending timer (see the run loop timer
+  above), so it counts only those stops. A timer that fired, or a pending one
+  kept for its unchanged deadline, counts nothing.
+- An http3 server connection's idle timer (`http3/server_conn.go`) counts the
+  Reset when the connection's last request stream ends, with the idle timeout,
+  and the stops of a pending timer when a request stream starts and in
+  `CloseWithError`.
+- A stop is counted only when `Stop` reports the timer pending.
+
+Not counted, as neither hot nor a move of a pending timer: the run loop
+timer's stop as the run loop ends, once a connection; a path probe's timer,
+stopped and replaced each probe; the closed connection's retirement
+`AfterFunc` and a canceled dial's close wait, both new timers; the
+`ConnGroup`'s timer for a read under a read deadline, which only
+`Transport.Close` sets; and the read deadlines a `Transport` sets on its
+packet conn as it closes.
+
+Nothing else changes: each counted call makes the timer calls it made before,
+a Reset with the same duration and a Stop at the same point, so every timer
+fires when it did.
+
+### Tests
+
+`urnetwork_timer_census_test.go` and `http3/urnetwork_timer_census_test.go`,
+run with `go test -run '^TestUrnetwork' . ./http3/` at the repository root.
+Each installs a census with a sample period of 1 and counts only the changes
+the goroutines of its synctest bubble make, since the census is process-wide:
+
+- under virtual time, a Read, a Peek and a Write that wait under a deadline
+  record one Reset for each wake that leaves them waiting, with the time then
+  left to the deadline, and one stop of their pending timer as they return;
+  one that its deadline ends records no stop;
+- `resetTimer` records a stop when it replaces a pending timer, and nothing
+  for an unchanged deadline or a timer that fired;
+- over a simulated network, a request on an http3 connection records a stop
+  at its start and a Reset with the idle timeout at its end; a request beside
+  a held one records neither; the connection's close records a stop;
+- a sample period that is not a positive power of two, or no `Record`, is
+  refused; a removed census records nothing; a census with a period of 8
+  records about one change in 8, each as 8.
+
+Each fails when its count is taken out, and the stop tests fail when a stop is
+counted whether or not the timer was pending. The upstream suite passes with
+this change: `go test -short .` here ran 768 tests (three of them Linux-only
+GSO tests, skipped on darwin), and `go test -short ./http3/` 301.

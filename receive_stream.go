@@ -203,9 +203,13 @@ func (s *ReceiveStream) readImpl(p []byte) (hasStreamWindowUpdate bool, hasConnW
 			} else {
 				if deadlineTimer == nil {
 					deadlineTimer = time.NewTimer(monotime.Until(deadline))
-					defer deadlineTimer.Stop()
+					// urnetwork: the stop of a pending timer is counted for the
+					// timer census (URNETWORK.md)
+					defer stopCensusTimer(deadlineTimer, TimerCensusSiteStreamReadTimer)
 				} else {
-					deadlineTimer.Reset(monotime.Until(deadline))
+					// urnetwork: the Reset is counted for the timer census
+					// (URNETWORK.md)
+					resetCensusTimer(deadlineTimer, monotime.Until(deadline), TimerCensusSiteStreamReadTimer)
 				}
 				select {
 				case <-s.readChan:
@@ -366,9 +370,13 @@ func (s *ReceiveStream) peekImpl(b []byte) (int, error) {
 		} else {
 			if deadlineTimer == nil {
 				deadlineTimer = time.NewTimer(monotime.Until(deadline))
-				defer deadlineTimer.Stop()
+				// urnetwork: the stop of a pending timer is counted for the
+				// timer census (URNETWORK.md)
+				defer stopCensusTimer(deadlineTimer, TimerCensusSiteStreamReadTimer)
 			} else {
-				deadlineTimer.Reset(monotime.Until(deadline))
+				// urnetwork: the Reset is counted for the timer census
+				// (URNETWORK.md)
+				resetCensusTimer(deadlineTimer, monotime.Until(deadline), TimerCensusSiteStreamReadTimer)
 			}
 			select {
 			case <-s.readChan:

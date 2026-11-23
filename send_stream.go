@@ -275,9 +275,13 @@ func (s *SendStream) write(p []byte, limiter func(int) int) (bool /* is newly co
 				}
 				if deadlineTimer == nil {
 					deadlineTimer = time.NewTimer(monotime.Until(deadline))
-					defer deadlineTimer.Stop()
+					// urnetwork: the stop of a pending timer is counted for the
+					// timer census (URNETWORK.md)
+					defer stopCensusTimer(deadlineTimer, TimerCensusSiteStreamWriteTimer)
 				} else {
-					deadlineTimer.Reset(monotime.Until(deadline))
+					// urnetwork: the Reset is counted for the timer census
+					// (URNETWORK.md)
+					resetCensusTimer(deadlineTimer, monotime.Until(deadline), TimerCensusSiteStreamWriteTimer)
 				}
 			}
 			if s.dataForWriting == nil || s.shutdownErr != nil || s.resetErr != nil {
