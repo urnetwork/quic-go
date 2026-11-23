@@ -70,13 +70,19 @@ func newRawServerConn(
 func (c *RawServerConn) onStreamsEmpty() {
 	if c.idleTimeout > 0 {
 		c.idleTimer.Reset(c.idleTimeout)
+		// urnetwork: counted for quic-go's timer census (URNETWORK.md)
+		quic.TimerCensusReset(quic.TimerCensusSiteHTTP3IdleTimer, c.idleTimeout)
 	}
 }
 
 // CloseWithError closes the connection with the given error code and message.
 func (c *RawServerConn) CloseWithError(code quic.ApplicationErrorCode, msg string) error {
 	if c.idleTimer != nil {
-		c.idleTimer.Stop()
+		// urnetwork: the stop of a pending timer is counted for quic-go's timer
+		// census (URNETWORK.md)
+		if c.idleTimer.Stop() {
+			quic.TimerCensusStop(quic.TimerCensusSiteHTTP3IdleTimer)
+		}
 	}
 	return c.rawConn.CloseWithError(code, msg)
 }
@@ -104,7 +110,11 @@ func (c *RawServerConn) handleRequestStream(str *stateTrackingStream) {
 	if c.idleTimeout > 0 {
 		// This only applies if the stream is the first active stream,
 		// but it's ok to stop a stopped timer.
-		c.idleTimer.Stop()
+		// urnetwork: the stop of a pending timer, the first active stream's,
+		// is counted for quic-go's timer census (URNETWORK.md)
+		if c.idleTimer.Stop() {
+			quic.TimerCensusStop(quic.TimerCensusSiteHTTP3IdleTimer)
+		}
 	}
 
 	conn := &c.rawConn
