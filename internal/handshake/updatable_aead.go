@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/urnetwork/quic-go/internal/monotime"
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/qerr"
-	"github.com/urnetwork/quic-go/internal/utils"
-	"github.com/urnetwork/quic-go/qlog"
-	"github.com/urnetwork/quic-go/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026/internal/monotime"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/qerr"
+	"github.com/urnetwork/quic-go/v2026/internal/utils"
+	"github.com/urnetwork/quic-go/v2026/qlog"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
 )
 
 var keyUpdateInterval atomic.Uint64

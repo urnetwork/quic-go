@@ -6,7 +6,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/urnetwork/quic-go"
+	"github.com/urnetwork/quic-go/v2026"
 )
 
 // Settingser allows waiting for and retrieving the peer's HTTP/3 settings.

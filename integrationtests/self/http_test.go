@@ -24,12 +24,12 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/urnetwork/quic-go"
-	"github.com/urnetwork/quic-go/http3"
-	"github.com/urnetwork/quic-go/http3/qlog"
-	quicproxy "github.com/urnetwork/quic-go/integrationtests/tools/proxy"
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/testutils/events"
+	"github.com/urnetwork/quic-go/v2026"
+	"github.com/urnetwork/quic-go/v2026/http3"
+	"github.com/urnetwork/quic-go/v2026/http3/qlog"
+	quicproxy "github.com/urnetwork/quic-go/v2026/integrationtests/tools/proxy"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/testutils/events"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

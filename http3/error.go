@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/urnetwork/quic-go"
+	"github.com/urnetwork/quic-go/v2026"
 )
 
 // Error is returned from the round tripper (for HTTP clients)
