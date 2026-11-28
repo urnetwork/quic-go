@@ -1,9 +1,9 @@
 package quic
 
 import (
-	"github.com/urnetwork/quic-go/internal/ackhandler"
-	"github.com/urnetwork/quic-go/internal/handshake"
-	"github.com/urnetwork/quic-go/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026/internal/ackhandler"
+	"github.com/urnetwork/quic-go/v2026/internal/handshake"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
 )
 
 // A HandshakeOnlyTrace is a qlogwriter.Trace that records a connection's

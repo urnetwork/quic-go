@@ -1,6 +1,6 @@
 package testutils
 
-import "github.com/urnetwork/quic-go/internal/wire"
+import "github.com/urnetwork/quic-go/v2026/internal/wire"
 
 type (
 	Frame                   = wire.Frame

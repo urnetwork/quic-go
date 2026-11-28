@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
 )
 
 // make it possible to mock connection ID for initial generation in the tests

@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/quic-go/qpack"
-	"github.com/urnetwork/quic-go"
-	"github.com/urnetwork/quic-go/http3/qlog"
-	"github.com/urnetwork/quic-go/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026"
+	"github.com/urnetwork/quic-go/v2026/http3/qlog"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
 )
 
 const (

@@ -1,4 +1,4 @@
-module github.com/urnetwork/quic-go
+module github.com/urnetwork/quic-go/v2026
 
 go 1.27.4
 
