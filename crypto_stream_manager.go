@@ -3,8 +3,8 @@ package quic
 import (
 	"fmt"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/wire"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/wire"
 )
 
 type cryptoStreamManager struct {

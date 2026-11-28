@@ -8,8 +8,8 @@ import (
 	mrand "math/rand/v2"
 	"testing"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/utils"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/utils"
 
 	ossfuzzseeds "github.com/quic-go/go-ossfuzz-seeds"
 

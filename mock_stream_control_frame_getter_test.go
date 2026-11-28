@@ -12,8 +12,8 @@ package quic
 import (
 	reflect "reflect"
 
-	ackhandler "github.com/urnetwork/quic-go/internal/ackhandler"
-	monotime "github.com/urnetwork/quic-go/internal/monotime"
+	ackhandler "github.com/urnetwork/quic-go/v2026/internal/ackhandler"
+	monotime "github.com/urnetwork/quic-go/v2026/internal/monotime"
 	gomock "go.uber.org/mock/gomock"
 )
 

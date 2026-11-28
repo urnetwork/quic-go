@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/utils"
-	"github.com/urnetwork/quic-go/quicvarint"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/utils"
+	"github.com/urnetwork/quic-go/v2026/quicvarint"
 )
 
 // ErrInvalidReservedBits is returned when the reserved bits are incorrect.
