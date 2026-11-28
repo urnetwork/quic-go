@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"math/rand/v2"
 
-	"github.com/urnetwork/quic-go/internal/ackhandler"
-	"github.com/urnetwork/quic-go/internal/handshake"
-	"github.com/urnetwork/quic-go/internal/monotime"
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/qerr"
-	"github.com/urnetwork/quic-go/internal/wire"
+	"github.com/urnetwork/quic-go/v2026/internal/ackhandler"
+	"github.com/urnetwork/quic-go/v2026/internal/handshake"
+	"github.com/urnetwork/quic-go/v2026/internal/monotime"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/qerr"
+	"github.com/urnetwork/quic-go/v2026/internal/wire"
 )
 
 var errNothingToPack = errors.New("nothing to pack")

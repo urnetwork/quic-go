@@ -17,7 +17,7 @@ import (
 
 	"golang.org/x/net/http/httpguts"
 
-	"github.com/urnetwork/quic-go"
+	"github.com/urnetwork/quic-go/v2026"
 )
 
 // Settings are HTTP/3 settings that apply to the underlying connection.

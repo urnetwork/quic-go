@@ -15,10 +15,10 @@ import (
 
 	_ "net/http/pprof"
 
-	"github.com/urnetwork/quic-go"
-	"github.com/urnetwork/quic-go/http3"
-	"github.com/urnetwork/quic-go/http3/qlog"
-	"github.com/urnetwork/quic-go/internal/testdata"
+	"github.com/urnetwork/quic-go/v2026"
+	"github.com/urnetwork/quic-go/v2026/http3"
+	"github.com/urnetwork/quic-go/v2026/http3/qlog"
+	"github.com/urnetwork/quic-go/v2026/internal/testdata"
 )
 
 type binds []string

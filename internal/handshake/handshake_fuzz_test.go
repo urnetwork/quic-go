@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/qtls"
-	"github.com/urnetwork/quic-go/internal/utils"
-	"github.com/urnetwork/quic-go/internal/wire"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/qtls"
+	"github.com/urnetwork/quic-go/v2026/internal/utils"
+	"github.com/urnetwork/quic-go/v2026/internal/wire"
 
 	ossfuzzseeds "github.com/quic-go/go-ossfuzz-seeds"
 )

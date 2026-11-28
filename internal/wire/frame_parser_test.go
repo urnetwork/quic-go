@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/qerr"
-	"github.com/urnetwork/quic-go/quicvarint"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/qerr"
+	"github.com/urnetwork/quic-go/v2026/quicvarint"
 
 	ossfuzzseeds "github.com/quic-go/go-ossfuzz-seeds"
 

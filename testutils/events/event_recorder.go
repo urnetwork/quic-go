@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/urnetwork/quic-go/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
 )
 
 // Event is a recorded event with the event time.
