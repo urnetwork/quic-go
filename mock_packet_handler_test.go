@@ -12,7 +12,7 @@ package quic
 import (
 	reflect "reflect"
 
-	qerr "github.com/urnetwork/quic-go/internal/qerr"
+	qerr "github.com/urnetwork/quic-go/v2026/internal/qerr"
 	gomock "go.uber.org/mock/gomock"
 )
 

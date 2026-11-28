@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/quicvarint"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/quicvarint"
 )
 
 func TestParseACKWithoutRanges(t *testing.T) {

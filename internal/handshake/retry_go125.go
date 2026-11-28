@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
 )
 
 // Instead of using an init function, the AEADs are created lazily.

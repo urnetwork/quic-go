@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/urnetwork/quic-go/qlog"
-	"github.com/urnetwork/quic-go/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026/qlog"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
 )
 
 func TestRecorder(t *testing.T) {

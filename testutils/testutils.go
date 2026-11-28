@@ -6,9 +6,9 @@ package testutils
 import (
 	"fmt"
 
-	"github.com/urnetwork/quic-go/internal/handshake"
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/internal/wire"
+	"github.com/urnetwork/quic-go/v2026/internal/handshake"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/internal/wire"
 )
 
 // writePacket returns a new raw packet with the specified header and payload

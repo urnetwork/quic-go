@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/urnetwork/quic-go/internal/wire"
+	"github.com/urnetwork/quic-go/v2026/internal/wire"
 )
 
 func TestIsFrameTypeAckEliciting(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/urnetwork/quic-go/internal/protocol"
-	"github.com/urnetwork/quic-go/qlogwriter"
-	"github.com/urnetwork/quic-go/quicvarint"
+	"github.com/urnetwork/quic-go/v2026/internal/protocol"
+	"github.com/urnetwork/quic-go/v2026/qlogwriter"
+	"github.com/urnetwork/quic-go/v2026/quicvarint"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
